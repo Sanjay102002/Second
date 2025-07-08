@@ -993,13 +993,73 @@ async def text_handler(bot: Client, m: Message):
                 ytf = f"bestvideo[height<={raw_text2}]+bestaudio/best[height<={raw_text2}]"
             else:
                 ytf = f"b[height<={raw_text2}]/bv[height<={raw_text2}]+ba/b/bv+ba"
-           if "apps-s3-jw-prod.utkarshapp.com" in url and 'enc_plain_mp4' in url:
+           # Define ytf for video formats
+ytf = f"bestvideo[height<={raw_text2}]+bestaudio/best[height<={raw_text2}]"
+
+# Handle Utkarsh URLs
+if "apps-s3-jw-prod.utkarshapp.com" in url and 'enc_plain_mp4' in url:
     url = url.replace(url.split("/")[-1], f"{res}.mp4")
     cmd = f'yt-dlp --add-header "Referer:https://utkarshapp.com/" -f "{ytf}" -o "{name}.mp4" "{url}"'
 elif "apps-s3-prod.utkarshapp.com" in url and ".pdf" in url:
-            else:
-                cmd = f'yt-dlp -f "{ytf}" "{url}" -o "{name}.mp4"'
-
+    cmd = f'yt-dlp --add-header "Referer:https://utkarshapp.com/" -o "{name}.pdf" "{url}"'
+elif "visionias" in url:
+    async with ClientSession() as session:
+        async with session.get(url, headers={'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9', 'Accept-Language': 'en-US,en;q=0.9', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive', 'Pragma': 'no-cache', 'Referer': 'http://www.visionias.in/', 'Sec-Fetch-Dest': 'iframe', 'Sec-Fetch-Mode': 'navigate', 'Sec-Fetch-Site': 'cross-site', 'Upgrade-Insecure-Requests': '1', 'User-Agent': 'Mozilla/5.0 (Linux; Android 12; RMX2121) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Mobile Safari/537.36', 'sec-ch-ua': '"Chromium";v="107", "Not=A?Brand";v="24"', 'sec-ch-ua-mobile': '?1', 'sec-ch-ua-platform': '"Android"',}) as resp:
+            text = await resp.text()
+            url = re.search(r"(https://.*?playlist.m3u8.*?)\"", text).group(1)
+    cmd = f'yt-dlp -f "{ytf}" -o "{name}.mp4" "{url}"'
+elif "acecwply" in url:
+    cmd = f'yt-dlp -o "{name}.%(ext)s" -f "bestvideo[height<={raw_text2}]+bestaudio" --hls-prefer-ffmpeg --no-keep-video --remux-video mkv --no-warning "{url}"'
+elif "https://cpvod.testbook.com/" in url:
+    url = url.replace("https://cpvod.testbook.com/","https://media-cdn.classplusapp.com/drm/")
+    url = f"https://drmapijion-botupdatevip.vercel.app/api?url={url}&token={cptoken}"
+    mpd, keys = helper.get_mps_and_keys(url)
+    url = mpd
+    keys_string = " ".join([f"--key {key}" for key in keys])
+    cmd = f'yt-dlp {keys_string} -f "{ytf}" -o "{name}.mp4" "{url}"'
+elif "classplusapp.com/drm/" in url:
+    url = f"https://drmapijion-botupdatevip.vercel.app/api?url={url}&token={cptoken}"
+    mpd, keys = helper.get_mps_and_keys(url)
+    url = mpd
+    keys_string = " ".join([f"--key {key}" for key in keys])
+    cmd = f'yt-dlp {keys_string} -f "{ytf}" -o "{name}.mp4" "{url}"'
+elif "tencdn.classplusapp" in url:
+    headers = {'host': 'api.classplusapp.com', 'x-access-token': f'{cptoken}', 'accept-language': 'EN', 'api-version': '18', 'app-version': '1.4.73.2', 'build-number': '35', 'connection': 'Keep-Alive', 'content-type': 'application/json', 'device-details': 'Xiaomi_Redmi 7_SDK-32', 'device-id': 'c28d3cb16bbdac01', 'region': 'IN', 'user-agent': 'Mobile-Android', 'webengage-luid': '00000187-6fe4-5d41-a530-26186858be4c', 'accept-encoding': 'gzip'}
+    params = {"url": f"{url}"}
+    response = requests.get('https://api.classplusapp.com/cams/uploader/video/jw-signed-url', headers=headers, params=params)
+    url = response.json()['url']
+    cmd = f'yt-dlp -f "{ytf}" -o "{name}.mp4" "{url}"'
+elif 'videos.classplusapp' in url:
+    url = requests.get(f'https://api.classplusapp.com/cams/uploader/video/jw-signed-url?url={url}', headers={'x-access-token': f'{cptoken}'}).json()['url']
+    cmd = f'yt-dlp -f "{ytf}" -o "{name}.mp4" "{url}"'
+elif 'media-cdn.classplusapp.com' in url or 'media-cdn-alisg.classplusapp.com' in url or 'media-cdn-a.classplusapp.com' in url:
+    headers = {'host': 'api.classplusapp.com', 'x-access-token': f'{cptoken}', 'accept-language': 'EN', 'api-version': '18', 'app-version': '1.4.73.2', 'build-number': '35', 'connection': 'Keep-Alive', 'content-type': 'application/json', 'device-details': 'Xiaomi_Redmi 7_SDK-32', 'device-id': 'c28d3cb16bbdac01', 'region': 'IN', 'user-agent': 'Mobile-Android', 'webengage-luid': '00000187-6fe4-5d41-a530-26186858be4c', 'accept-encoding': 'gzip'}
+    params = {"url": f"{url}"}
+    response = requests.get('https://api.classplusapp.com/cams/uploader/video/jw-signed-url', headers=headers, params=params)
+    url = response.json()['url']
+    cmd = f'yt-dlp -f "{ytf}" -o "{name}.mp4" "{url}"'
+elif "edge.api.brightcove.com" in url:
+    bcov = f'bcov_auth={cwtoken}'
+    url = url.split("bcov_auth")[0]+bcov
+    cmd = f'yt-dlp -f "{ytf}" -o "{name}.mp4" "{url}"'
+elif "childId" in url and "parentId" in url:
+    url = f"https://anonymousrajputplayer-9ab2f2730a02.herokuapp.com/pw?url={url}&token={pwtoken}"
+    cmd = f'yt-dlp -f "{ytf}" -o "{name}.mp4" "{url}"'
+elif "d1d34p8vz63oiq" in url or "sec1.pw.live" in url:
+    url = f"https://anonymouspwplayer-b99f57957198.herokuapp.com/pw?url={url}?token={pwtoken}"
+    cmd = f'yt-dlp -f "{ytf}" -o "{name}.mp4" "{url}"'
+elif ".pdf*" in url:
+    url = f"https://dragoapi.vercel.app/pdf/{url}"
+    cmd = f'yt-dlp -o "{name}.pdf" "{url}"'
+elif 'encrypted.m' in url:
+    appxkey = url.split('*')[1]
+    url = url.split('*')[0]
+    cmd = None  # Will be handled by helper.download_and_decrypt_video
+elif "youtube.com" in url or "youtu.be" in url:
+    cmd = f'yt-dlp --cookies youtube_cookies.txt -f "{ytf}" -o "{name}.mp4" "{url}"'
+else:
+    cmd = f'yt-dlp -f "{ytf}" -o "{name}.mp4" "{url}"'
+    
             try:
                 cc = f'🎞️𝐓𝐢𝐭𝐥𝐞 » `{name} [{res}].mp4`\n🔗𝐋𝐢𝐧𝐤 » <a href="{link}">__**CLICK HERE**__</a>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CREDIT}`'
                 cc1 = f'📕𝐓𝐢𝐭𝐥𝐞 » `{name}`\n🔗𝐋𝐢𝐧𝐤 » <a href="{link}">__**CLICK HERE**__</a>\n\n🌟𝐄𝐱𝐭𝐫𝐚𝐜𝐭𝐞𝐝 𝐁𝐲 » `{CREDIT}`'
