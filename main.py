@@ -993,13 +993,10 @@ async def text_handler(bot: Client, m: Message):
                 ytf = f"bestvideo[height<={raw_text2}]+bestaudio/best[height<={raw_text2}]"
             else:
                 ytf = f"b[height<={raw_text2}]/bv[height<={raw_text2}]+ba/b/bv+ba"
-           
-            if "jw-prod" in url:
-                cmd = f'yt-dlp -o "{name}.mp4" "{url}"'
-            elif "webvideos.classplusapp." in url:
-               cmd = f'yt-dlp --add-header "referer:https://web.classplusapp.com/" --add-header "x-cdn-tag:empty" -f "{ytf}" "{url}" -o "{name}.mp4"'
-            elif "youtube.com" in url or "youtu.be" in url:
-                cmd = f'yt-dlp --cookies youtube_cookies.txt -f "{ytf}" "{url}" -o "{name}".mp4'
+           if "apps-s3-jw-prod.utkarshapp.com" in url and 'enc_plain_mp4' in url:
+    url = url.replace(url.split("/")[-1], f"{res}.mp4")
+    cmd = f'yt-dlp --add-header "Referer:https://utkarshapp.com/" -f "{ytf}" -o "{name}.mp4" "{url}"'
+elif "apps-s3-prod.utkarshapp.com" in url and ".pdf" in url:
             else:
                 cmd = f'yt-dlp -f "{ytf}" "{url}" -o "{name}.mp4"'
 
